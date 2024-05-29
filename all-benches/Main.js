@@ -26,7 +26,10 @@ for (const benchInstance of allBenchInstances) {
   stats = {};
   allStats[name] = stats;
 
-  stats["totalFunctions"] = Query.search("function").get().length;
+  const totalFunctions = Query.search("function")
+    .get()
+    .map((f) => f.name);
+  stats["totalFunctions"] = totalFunctions.length;
 
   const externalCalls = getFunctionsWithExternalCalls();
   stats["functionWithExternalCallsTotal"] = externalCalls.length;
@@ -42,8 +45,16 @@ for (const benchInstance of allBenchInstances) {
   );
   stats["functionWithArrays"].forEach((item) => uneligibleFunctions.add(item));
 
-  stats["eligibleFunctionsTotal"] =
-    stats["totalFunctions"] - uneligibleFunctions.size;
+  const eligibleFunctions = new Set();
+  totalFunctions.forEach((item) => eligibleFunctions.add(item));
+  for (const value of uneligibleFunctions) {
+    eligibleFunctions.delete(value);
+  }
+
+  //const eligibleFunctions = allFunctions.difference(uneligibleFunctions);
+
+  stats["eligibleFunctionsTotal"] = eligibleFunctions.size;
+  stats["eligibleFunctions"] = Array.from(eligibleFunctions);
 
   // Unload from AST
   benchInstance.close();
@@ -89,7 +100,7 @@ function getFunctionsWithArrays() {
     // Check array accesses
     if (!hasArray) {
       // Any array access counts has having arrays
-      for (const arrayAccess of Query.search("arrayAccess")) {
+      for (const arrayAccess of Query.searchFrom(func, "arrayAccess")) {
         hasArray = true;
         break;
       }
