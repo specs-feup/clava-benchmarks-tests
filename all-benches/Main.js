@@ -36,6 +36,15 @@ for (const benchInstance of allBenchInstances) {
   stats["functionWithArraysTotal"] = arrays.length;
   stats["functionWithArrays"] = arrays.map((f) => f.name);
 
+  const uneligibleFunctions = new Set();
+  stats["functionWithExternalCalls"].forEach((item) =>
+    uneligibleFunctions.add(item)
+  );
+  stats["functionWithArrays"].forEach((item) => uneligibleFunctions.add(item));
+
+  stats["eligibleFunctionsTotal"] =
+    stats["totalFunctions"] - uneligibleFunctions.size;
+
   // Unload from AST
   benchInstance.close();
 
@@ -56,6 +65,37 @@ function getFunctionsWithExternalCalls() {
     }
 
     if (hasExternalCall) {
+      res.push(func);
+    }
+  }
+
+  return res;
+}
+
+function getFunctionsWithArrays() {
+  const res = [];
+
+  for (const func of Query.search("function")) {
+    let hasArray = false;
+
+    // Check declarations
+    for (const decl of Query.searchFrom(func, "decl")) {
+      if (decl.type.isArray) {
+        hasArray = true;
+        break;
+      }
+    }
+
+    // Check array accesses
+    if (!hasArray) {
+      // Any array access counts has having arrays
+      for (const arrayAccess of Query.search("arrayAccess")) {
+        hasArray = true;
+        break;
+      }
+    }
+
+    if (hasArray) {
       res.push(func);
     }
   }
