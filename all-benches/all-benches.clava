@@ -4,7 +4,9 @@
     <entry>
       <string>workspace</string>
       <FileList>
-        <fileList/>
+        <fileList>
+          <file>..\..\coral\in\test</file>
+        </fileList>
       </FileList>
     </entry>
     <entry>

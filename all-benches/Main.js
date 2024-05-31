@@ -12,7 +12,7 @@ const allBenchInstances = [];
 
 // Use default benchmarks
 //allBenchInstances.push(...new CHStoneBenchmarkSet().getInstances());
-allBenchInstances.push(...new HiFlipVXBenchmarkSet().getInstances());
+//allBenchInstances.push(...new HiFlipVXBenchmarkSet().getInstances());
 /*
 allBenchInstances.push(
   ...[
@@ -28,7 +28,14 @@ const allStats = {};
 
 // Collect stats from the code specified in the configuration
 console.log("Collecting stats from code in current AST");
-collectStats("currentAst");
+
+// Consider each file as a different benchmark
+for (const $file of Query.search("file")) {
+  collectStats("currentAst-" + $file.name, $file);
+}
+
+// Save stats
+Io.writeFile(outputFile, JSON.stringify(allStats));
 
 console.log("Loading " + allBenchInstances.length + " benchmark instances");
 
@@ -48,29 +55,31 @@ for (const benchInstance of allBenchInstances) {
   Io.writeFile(outputFile, JSON.stringify(allStats));
 }
 
-function collectStats(name) {
+function collectStats(name, $startNode) {
+  $startNode = $startNode ?? Query.root();
+
   // Create stats
   stats = {};
   allStats[name] = stats;
 
-  const totalFunctions = Query.search("function")
+  const totalFunctions = Query.searchFrom($startNode, "function")
     .get()
     .map((f) => f.name);
   stats["totalFunctions"] = totalFunctions.length;
 
-  const withPointers = getFunctions(hasPointers);
+  const withPointers = getFunctions(hasPointers, $startNode);
   stats["functionWithPointersTotal"] = withPointers.length;
   stats["functionWithPointers"] = withPointers.map((f) => f.name);
 
-  const externalCalls = getFunctions(hasExternalCalls);
+  const externalCalls = getFunctions(hasExternalCalls, $startNode);
   stats["functionWithExternalCallsTotal"] = externalCalls.length;
   stats["functionWithExternalCalls"] = externalCalls.map((f) => f.name);
 
-  const arrays = getFunctions(hasArrays);
+  const arrays = getFunctions(hasArrays, $startNode);
   stats["functionWithArraysTotal"] = arrays.length;
   stats["functionWithArrays"] = arrays.map((f) => f.name);
 
-  const pointerArith = getFunctions(hasPointerArith);
+  const pointerArith = getFunctions(hasPointerArith, $startNode);
   stats["functionWithPointerArithTotal"] = pointerArith.length;
   stats["functionWithPointerArith"] = pointerArith.map((f) => f.name);
 
@@ -95,10 +104,10 @@ function collectStats(name) {
   stats["eligibleFunctions"] = Array.from(eligibleFunctions);
 }
 
-function getFunctions(functionPredicate) {
+function getFunctions(functionPredicate, $startNode) {
   const res = [];
 
-  for (const func of Query.search("function")) {
+  for (const func of Query.searchFrom($startNode, "function")) {
     if (functionPredicate(func)) {
       res.push(func);
     }
