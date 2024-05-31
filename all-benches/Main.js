@@ -31,19 +31,26 @@ for (const benchInstance of allBenchInstances) {
     .map((f) => f.name);
   stats["totalFunctions"] = totalFunctions.length;
 
-  const externalCalls = getFunctionsWithExternalCalls();
+  const externalCalls = getFunctions(hasExternalCalls);
   stats["functionWithExternalCallsTotal"] = externalCalls.length;
   stats["functionWithExternalCalls"] = externalCalls.map((f) => f.name);
 
-  const arrays = getFunctionsWithArrays();
+  const arrays = getFunctions(hasArrays);
   stats["functionWithArraysTotal"] = arrays.length;
   stats["functionWithArrays"] = arrays.map((f) => f.name);
+
+  const pointerArith = getFunctions(hasPointerArith);
+  stats["functionWithPointerArithTotal"] = pointerArith.length;
+  stats["functionWithPointerArith"] = pointerArith.map((f) => f.name);
 
   const uneligibleFunctions = new Set();
   stats["functionWithExternalCalls"].forEach((item) =>
     uneligibleFunctions.add(item)
   );
   stats["functionWithArrays"].forEach((item) => uneligibleFunctions.add(item));
+  stats["functionWithPointerArith"].forEach((item) =>
+    uneligibleFunctions.add(item)
+  );
 
   const eligibleFunctions = new Set();
   totalFunctions.forEach((item) => eligibleFunctions.add(item));
@@ -63,19 +70,11 @@ for (const benchInstance of allBenchInstances) {
   Io.writeFile(outputFile, JSON.stringify(allStats));
 }
 
-function getFunctionsWithExternalCalls() {
+function getFunctions(functionPredicate) {
   const res = [];
 
   for (const func of Query.search("function")) {
-    let hasExternalCall = false;
-    for (const call of Query.searchFrom(func, "call")) {
-      if (call.definition === undefined) {
-        hasExternalCall = true;
-        break;
-      }
-    }
-
-    if (hasExternalCall) {
+    if (functionPredicate(func)) {
       res.push(func);
     }
   }
@@ -83,33 +82,45 @@ function getFunctionsWithExternalCalls() {
   return res;
 }
 
-function getFunctionsWithArrays() {
-  const res = [];
-
-  for (const func of Query.search("function")) {
-    let hasArray = false;
-
-    // Check declarations
-    for (const decl of Query.searchFrom(func, "decl")) {
-      if (decl.type.isArray) {
-        hasArray = true;
-        break;
-      }
-    }
-
-    // Check array accesses
-    if (!hasArray) {
-      // Any array access counts has having arrays
-      for (const arrayAccess of Query.searchFrom(func, "arrayAccess")) {
-        hasArray = true;
-        break;
-      }
-    }
-
-    if (hasArray) {
-      res.push(func);
+function hasArrays($function) {
+  // Check declarations
+  for (const decl of Query.searchFrom($function, "decl")) {
+    if (decl.type.isArray) {
+      return true;
     }
   }
 
-  return res;
+  // Check array accesses
+  // Any array access counts has having arrays
+  for (const arrayAccess of Query.searchFrom($function, "arrayAccess")) {
+    return true;
+  }
+
+  return false;
+}
+
+function hasExternalCalls($function) {
+  for (const call of Query.searchFrom($function, "call")) {
+    if (call.definition === undefined) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function hasPointerArith($function) {
+  for (const op of Query.searchFrom($function, "op")) {
+    if (op.kind === "assign") {
+      continue;
+    }
+
+    for (const child of op.children) {
+      if (child.type.isPointer) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
