@@ -31,6 +31,10 @@ for (const benchInstance of allBenchInstances) {
     .map((f) => f.name);
   stats["totalFunctions"] = totalFunctions.length;
 
+  const withPointers = getFunctions(hasPointers);
+  stats["functionWithPointersTotal"] = withPointers.length;
+  stats["functionWithPointers"] = withPointers.map((f) => f.name);
+
   const externalCalls = getFunctions(hasExternalCalls);
   stats["functionWithExternalCallsTotal"] = externalCalls.length;
   stats["functionWithExternalCalls"] = externalCalls.map((f) => f.name);
@@ -53,7 +57,7 @@ for (const benchInstance of allBenchInstances) {
   );
 
   const eligibleFunctions = new Set();
-  totalFunctions.forEach((item) => eligibleFunctions.add(item));
+  withPointers.forEach((item) => eligibleFunctions.add(item));
   for (const value of uneligibleFunctions) {
     eligibleFunctions.delete(value);
   }
@@ -119,6 +123,16 @@ function hasPointerArith($function) {
       if (child.type.isPointer) {
         return true;
       }
+    }
+  }
+
+  return false;
+}
+
+function hasPointers($function) {
+  for (const expr of Query.searchFrom($function, "expr")) {
+    if (expr.type.isPointer) {
+      return true;
     }
   }
 
