@@ -93,7 +93,7 @@ function collectStats(name, $startNode) {
   );
 
   const eligibleFunctions = new Set();
-  withPointers.forEach((item) => eligibleFunctions.add(item));
+  stats["functionWithPointers"].forEach((item) => eligibleFunctions.add(item));
   for (const value of uneligibleFunctions) {
     eligibleFunctions.delete(value);
   }
@@ -144,8 +144,20 @@ function hasExternalCalls($function) {
 }
 
 function hasPointerArith($function) {
+  // a+b, a-b, a+=b, a-=b, a++, ++a, a--, --a
+  const pointerArithOps = new Set([
+    "add",
+    "sub",
+    "add_assign",
+    "sub_assign",
+    "post_inc",
+    "pre_inc",
+    "post_dec",
+    "pre_dec",
+  ]);
+
   for (const op of Query.searchFrom($function, "op")) {
-    if (op.kind === "assign") {
+    if (!pointerArithOps.has(op.kind)) {
       continue;
     }
 
@@ -160,8 +172,8 @@ function hasPointerArith($function) {
 }
 
 function hasPointers($function) {
-  for (const expr of Query.searchFrom($function, "expr")) {
-    if (expr.type.isPointer) {
+  for (const expr of Query.searchFrom($function, "expression")) {
+    if (expr.type.desugarAll.isPointer) {
       return true;
     }
   }
