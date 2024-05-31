@@ -1,4 +1,6 @@
 laraImport("lara.benchmark.CHStoneBenchmarkSet");
+laraImport("lara.benchmark.HiFlipVXBenchmarkSet");
+laraImport("lara.benchmark.LsuBenchmarkInstance");
 laraImport("lara.Io");
 laraImport("clava.Clava");
 
@@ -9,11 +11,26 @@ const outputFile = Io.getPath(Clava.getData().getContextFolder(), "stats.json");
 const allBenchInstances = [];
 
 // Use default benchmarks
-allBenchInstances.push(...new CHStoneBenchmarkSet().getInstances());
-
-console.log("Loading " + allBenchInstances.length + " benchmark instances");
+//allBenchInstances.push(...new CHStoneBenchmarkSet().getInstances());
+allBenchInstances.push(...new HiFlipVXBenchmarkSet().getInstances());
+/*
+allBenchInstances.push(
+  ...[
+    //new LsuBenchmarkInstance("bzip2", "SMALL"),
+    //new LsuBenchmarkInstance("gzip", "SMALL"),
+    new LsuBenchmarkInstance("oggenc", "SMALL"),
+    new LsuBenchmarkInstance("gcc", "SMALL"),
+  ]
+);
+*/
 
 const allStats = {};
+
+// Collect stats from the code specified in the configuration
+console.log("Collecting stats from code in current AST");
+collectStats("currentAst");
+
+console.log("Loading " + allBenchInstances.length + " benchmark instances");
 
 for (const benchInstance of allBenchInstances) {
   const name = benchInstance.getName();
@@ -22,6 +39,16 @@ for (const benchInstance of allBenchInstances) {
   console.log("Loading benchmark '" + name + "'");
   benchInstance.load();
 
+  collectStats(name);
+
+  // Unload from AST
+  benchInstance.close();
+
+  // Save stats
+  Io.writeFile(outputFile, JSON.stringify(allStats));
+}
+
+function collectStats(name) {
   // Create stats
   stats = {};
   allStats[name] = stats;
@@ -66,12 +93,6 @@ for (const benchInstance of allBenchInstances) {
 
   stats["eligibleFunctionsTotal"] = eligibleFunctions.size;
   stats["eligibleFunctions"] = Array.from(eligibleFunctions);
-
-  // Unload from AST
-  benchInstance.close();
-
-  // Save stats
-  Io.writeFile(outputFile, JSON.stringify(allStats));
 }
 
 function getFunctions(functionPredicate) {

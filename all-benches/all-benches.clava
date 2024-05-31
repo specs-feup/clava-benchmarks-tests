@@ -203,6 +203,13 @@
       <FileList>
         <fileList>
           <file>..\..\clava-benchmarks\CHStone</file>
+          <file>..\..\clava-benchmarks\HiFlipVX</file>
+          <file>..\..\clava-benchmarks\LSU</file>
+          <file>..\..\clava-benchmarks\MachSuite</file>
+          <file>..\..\clava-benchmarks\NAS</file>
+          <file>..\..\clava-benchmarks\Parboil</file>
+          <file>..\..\clava-benchmarks\Polybench</file>
+          <file>..\..\clava-benchmarks\Rosetta</file>
         </fileList>
       </FileList>
     </entry>
