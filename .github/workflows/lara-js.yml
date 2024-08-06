@@ -70,9 +70,8 @@ jobs:
     - name: InstallDist Clava
       working-directory: workspace/clava/ClavaWeaver
       run: gradle installDist
-
+      
     - name: Execute 'all-benches.clava'
       working-directory: workspace/clava-benchmarks-tests
       run: |
-    #    ls -la
         ../clava/ClavaWeaver/build/install/ClavaWeaver/bin/ClavaWeaver --config ./all-benches/all-benches.clava
