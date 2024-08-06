@@ -1,29 +1,30 @@
 laraImport("lara.benchmark.CHStoneBenchmarkSet");
-laraImport("lara.benchmark.HiFlipVXBenchmarkSet");
-laraImport("lara.benchmark.LsuBenchmarkInstance");
+//laraImport("lara.benchmark.HiFlipVXBenchmarkSet");
+//laraImport("lara.benchmark.LsuBenchmarkInstance");
 laraImport("lara.Io");
 laraImport("clava.Clava");
+laraImport("weaver.Query");
 
 // Output file
-const outputFile = Io.getPath(Clava.getData().getContextFolder(), "stats.json");
+//const outputFile = Io.getPath(Clava.getData().getContextFolder(), "stats.json");
+const outputFile = Io.getPath("stats.json");
 
 // Collect all bench instances
 const allBenchInstances = [];
 
 // Use default benchmarks
-//allBenchInstances.push(...new CHStoneBenchmarkSet().getInstances());
+allBenchInstances.push(...new CHStoneBenchmarkSet().getInstances());
 //allBenchInstances.push(...new HiFlipVXBenchmarkSet().getInstances());
 /*
 allBenchInstances.push(
   ...[
     //new LsuBenchmarkInstance("bzip2", "SMALL"),
-    //new LsuBenchmarkInstance("gzip", "SMALL"),
-    new LsuBenchmarkInstance("oggenc", "SMALL"),
-    new LsuBenchmarkInstance("gcc", "SMALL"),
+    new LsuBenchmarkInstance("gzip", "SMALL"),
+    //new LsuBenchmarkInstance("oggenc", "SMALL"),
+    //new LsuBenchmarkInstance("gcc", "SMALL"),
   ]
 );
 */
-
 const allStats = {};
 
 // Collect stats from the code specified in the configuration
