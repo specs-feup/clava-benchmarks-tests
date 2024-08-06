@@ -21,60 +21,58 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    #defaults:
-    #  run:
-    #    working-directory: ./..
-
     steps:
     - uses: actions/checkout@v4
       # Because of scheduled runs, by default run on default branch
       with:
         ref: main
+        path: workspace/clava-benchmarks-tests
 
-    - name: Cache ivy dependencies
-      id: cache-nivy
-      uses: actions/cache@v3
-      env:
-          cache-name: cache-ivy-dependencies
+    - name: Check out clava-benchmarks repo
+      uses: actions/checkout@v4
       with:
-          # ivy dependencies cache files are stored in `~/.ivy2` on Linux/macOS
-          path: ~/.ivy2
-          key: ${{ runner.os }}-build-${{ env.cache-name }}        
-    
+        repository: specs-feup/clava-benchmarks
+        path: workspace/clava-benchmarks
+        ref: clava-js
+
     - name: Set up JDK 17
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Install build essentials and CMake
-      run: |
-        sudo apt-get update
-        sudo apt-get install build-essential 
-        sudo apt-get install -y cmake
-
-    - name: Generate build.xml
-      run: | 
-        wget -q -N http://specs.fe.up.pt/tools/eclipse-build.jar
-        java -jar eclipse-build.jar https://github.com/specs-feup/specs-java-libs https://github.com/specs-feup/lara-framework?commit=feature/lara-js https://github.com/specs-feup/clava?commit=feature/clava-js --project ClavaWeaver --main pt.up.fe.specs.clava.weaver.ClavaWeaverLauncher --jar subfolder
-        wget -N -O /usr/share/ant/lib/ivy-2.5.0.jar specs.fe.up.pt/libs/ivy-2.5.0.jar
-    - name: Build with Ant
-      run: |
-        ant -noinput -buildfile build.xml
-        
-    - name: Execute Clava configuration
-      run: |
-        ls -la        
-        java -jar Clava.jar --config ./all-benches/all-benches.clava
-
-    - name: List directory
-      run: |
-        echo "Current folder"
-        ls
-    - name: Publish Test Report 
-      uses: mikepenz/action-junit-report@v3.6.1
-      if: always() # always run even if the previous step fails
+    - name: Check out specs-java-libs repo
+      uses: actions/checkout@v4
       with:
-        report_paths: '**/reports-eclipse-build/TEST-*.xml'
-        summary: true
-        #exclude_sources: ''        
+        repository: specs-feup/specs-java-libs
+        path: workspace/specs-java-libs
+
+    - name: Check out lara-framework repo
+      uses: actions/checkout@v4
+      with:
+        repository: specs-feup/lara-framework
+        ref: feature/lara-js
+        path: workspace/lara-framework
+
+    - name: Check out Clava repo
+      uses: actions/checkout@v4
+      with:
+        repository: specs-feup/clava
+        ref: feature/clava-js
+        path: workspace/clava
+
+    # Configure Gradle for optimal use in GitHub Actions, including caching of downloaded dependencies.
+    # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
+
+    # Setting up gradle multi-project would be helpful
+    - name: InstallDist Clava
+      working-directory: workspace/clava/ClavaWeaver
+      run: gradle installDist
+
+    - name: Execute 'all-benches.clava'
+      working-directory: workspace/clava-benchmarks-tests
+      run: |
+    #    ls -la
+        ../clava/ClavaWeaver/build/install/ClavaWeaver/bin/ClavaWeaver --config ./all-benches/all-benches.clava
