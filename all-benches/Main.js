@@ -21,9 +21,8 @@ const outputFile = Io.getPath(Clava.getData().getContextFolder(), "stats.json");
 const allBenchInstances = [];
 
 // Use default benchmarks
-//allBenchInstances.push(...new CHStoneBenchmarkSet().getInstances());
-//allBenchInstances.push(...new HiFlipVXBenchmarkSet().getInstances());
-
+allBenchInstances.push(...new CHStoneBenchmarkSet().getInstances());
+allBenchInstances.push(...new HiFlipVXBenchmarkSet().getInstances());
 allBenchInstances.push(
   ...[
     new LsuBenchmarkInstance("bzip2", "SMALL"),
@@ -33,11 +32,11 @@ allBenchInstances.push(
   ]
 );
 
-//allBenchInstances.push(...new MachSuiteBenchmarkSet().getInstances());
-//allBenchInstances.push(...new NasBenchmarkSet().getInstances());
-//allBenchInstances.push(...new ParboilBenchmarkSet().getInstances());
-//allBenchInstances.push(...new PolybenchBenchmarkSet().getInstances());
-//allBenchInstances.push(...new RosettaBenchmarkSet().getInstances());
+allBenchInstances.push(...new MachSuiteBenchmarkSet().getInstances());
+allBenchInstances.push(...new NasBenchmarkSet().getInstances());
+allBenchInstances.push(...new ParboilBenchmarkSet().getInstances());
+allBenchInstances.push(...new PolybenchBenchmarkSet().getInstances());
+allBenchInstances.push(...new RosettaBenchmarkSet().getInstances());
 
 const allStats = {};
 
@@ -57,11 +56,16 @@ console.log("Loading " + allBenchInstances.length + " benchmark instances");
 for (const benchInstance of allBenchInstances) {
   const name = benchInstance.getName();
 
+  // Configure CMaker
+  //benchInstance.getCMaker().setGenerator("MinGW Makefiles");
+
   // Load benchmark
   console.log("Loading benchmark '" + name + "'");
   benchInstance.load();
 
   collectStats(name);
+
+  benchInstance.execute();
 
   // Unload from AST
   benchInstance.close();
