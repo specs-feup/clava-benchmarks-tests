@@ -1,30 +1,44 @@
-laraImport("lara.benchmark.CHStoneBenchmarkSet");
-//laraImport("lara.benchmark.HiFlipVXBenchmarkSet");
-//laraImport("lara.benchmark.LsuBenchmarkInstance");
 laraImport("lara.Io");
-laraImport("clava.Clava");
+laraImport("lara.Check");
+laraImport("lara.Strings");
 laraImport("weaver.Query");
+laraImport("clava.Clava");
+
+laraImport("lara.benchmark.CHStoneBenchmarkSet");
+laraImport("lara.benchmark.HiFlipVXBenchmarkSet");
+laraImport("lara.benchmark.LsuBenchmarkInstance");
+laraImport("lara.benchmark.MachSuiteBenchmarkSet");
+laraImport("lara.benchmark.NasBenchmarkSet");
+laraImport("lara.benchmark.ParboilBenchmarkSet");
+laraImport("lara.benchmark.PolybenchBenchmarkSet");
+laraImport("lara.benchmark.RosettaBenchmarkSet");
 
 // Output file
-//const outputFile = Io.getPath(Clava.getData().getContextFolder(), "stats.json");
-const outputFile = Io.getPath("stats.json");
+const outputFile = Io.getPath(Clava.getData().getContextFolder(), "stats.json");
+//const outputFile = Io.getPath("stats.json");
 
 // Collect all bench instances
 const allBenchInstances = [];
 
 // Use default benchmarks
-allBenchInstances.push(...new CHStoneBenchmarkSet().getInstances());
+//allBenchInstances.push(...new CHStoneBenchmarkSet().getInstances());
 //allBenchInstances.push(...new HiFlipVXBenchmarkSet().getInstances());
-/*
+
 allBenchInstances.push(
   ...[
-    //new LsuBenchmarkInstance("bzip2", "SMALL"),
+    new LsuBenchmarkInstance("bzip2", "SMALL"),
     new LsuBenchmarkInstance("gzip", "SMALL"),
-    //new LsuBenchmarkInstance("oggenc", "SMALL"),
-    //new LsuBenchmarkInstance("gcc", "SMALL"),
+    new LsuBenchmarkInstance("oggenc", "SMALL"),
+    new LsuBenchmarkInstance("gcc", "SMALL"),
   ]
 );
-*/
+
+//allBenchInstances.push(...new MachSuiteBenchmarkSet().getInstances());
+//allBenchInstances.push(...new NasBenchmarkSet().getInstances());
+//allBenchInstances.push(...new ParboilBenchmarkSet().getInstances());
+//allBenchInstances.push(...new PolybenchBenchmarkSet().getInstances());
+//allBenchInstances.push(...new RosettaBenchmarkSet().getInstances());
+
 const allStats = {};
 
 // Collect stats from the code specified in the configuration
@@ -54,6 +68,21 @@ for (const benchInstance of allBenchInstances) {
 
   // Save stats
   Io.writeFile(outputFile, JSON.stringify(allStats));
+}
+
+// Verify if stats are the same
+const currentStats = Strings.normalize(JSON.stringify(allStats).toString());
+const expectedStats = Strings.normalize(
+  Io.readFile(
+    Io.getPath(Clava.getData().getContextFolder(), "stats-expected.json")
+  )
+);
+
+if (currentStats !== expectedStats) {
+  throw new Error(
+    "Current result differs from expected:\n" +
+      Check.diff(expectedStats, currentStats)
+  );
 }
 
 function collectStats(name, $startNode) {
@@ -120,7 +149,7 @@ function getFunctions(functionPredicate, $startNode) {
 function hasArrays($function) {
   // Check declarations
   for (const decl of Query.searchFrom($function, "decl")) {
-    if (decl.type.isArray) {
+    if (decl.type !== undefined && decl.type.isArray) {
       return true;
     }
   }
