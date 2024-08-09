@@ -65,7 +65,7 @@ for (const benchInstance of allBenchInstances) {
 
   collectStats(name);
 
-  benchInstance.execute();
+  //benchInstance.execute();
 
   // Unload from AST
   benchInstance.close();
