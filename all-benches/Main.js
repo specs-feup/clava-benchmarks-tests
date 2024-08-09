@@ -28,7 +28,7 @@ allBenchInstances.push(
     new LsuBenchmarkInstance("bzip2", "SMALL"),
     new LsuBenchmarkInstance("gzip", "SMALL"),
     new LsuBenchmarkInstance("oggenc", "SMALL"),
-    new LsuBenchmarkInstance("gcc", "SMALL"),
+    //new LsuBenchmarkInstance("gcc", "SMALL"),
   ]
 );
 
